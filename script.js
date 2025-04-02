@@ -82,9 +82,16 @@ document.addEventListener('keydown', (e) => {
 });
 
 function gameLoop() {
-    if (gameOver) return;
+    if (gameOver)
+        {
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            ctx.font = '40px Arial';
+            ctx.fillText('Game Over', canvas.width/2 - 80, canvas.height/2);
+            return;
+        } 
     
-    drawMine();
     drawPlayer();
     ctx.fillStyle = 'black';
     ctx.font = '20px Arial';
@@ -94,5 +101,6 @@ function gameLoop() {
 }
 
 // Inicializálás
+drawMine();
 generateMine();
 gameLoop();
