@@ -5,14 +5,14 @@ const tileSize = 25;
 const cols = canvas.width / tileSize;
 const rows = canvas.height / tileSize;
 
-let mine = [];
+let Mine = [];
 let player = { x: 2, y: 0, color: 'blue', width: tileSize, height: tileSize };
 let score = 0;
 let gameOver = false;
 
 function generateMine() {
     for (let row = 0; row < rows; row++) {
-        Mine[row] = [];
+        if (!Mine[row]) Mine[row] = [];
         for (let col = 0; col < cols; col++) {
             if (row === rows - 1) {
                 Mine[row][col] = 'stone';
