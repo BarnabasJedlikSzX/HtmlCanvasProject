@@ -12,11 +12,13 @@ export class Hook {
         this.angle = 0;
         this.length = 40;
         this.maxSwingLength = 40;
-        this.speed = 5;
+        this.speed = 2.5;
         this.swinging = true;
-        this.state = 0; // 0: swinging, 1: shooting, 2: retracting
-        this.swingSpeed = 0.06;
+        this.state = 0;
+        this.swingSpeed = 0.04;
         this.caughtItem = null;
+        this.hookEndX = 0;
+        this.hookEndY = 0;
     }
 
     swing() {
@@ -52,21 +54,30 @@ export class Hook {
     update(startX, startY, canvasWidth, canvasHeight) {
         if (this.state === 1) {
             this.length = this.length + this.speed;
-            var hookEndX = startX + Math.sin(this.angle) * this.length;
-            var hookEndY = startY + Math.cos(this.angle) * this.length;
+            this.hookEndX = startX + Math.sin(this.angle) * this.length;
+            this.hookEndY = startY + Math.cos(this.angle) * this.length;
 
-            if (hookEndX < 0 || hookEndX > canvasWidth || hookEndY < 0 || hookEndY > canvasHeight) {
+            if (this.hookEndX < 0 || this.hookEndX > canvasWidth || this.hookEndY < 0 || this.hookEndY > canvasHeight) {
                 this.state = 2;
             }
         } else if (this.state === 2) {
             var retractSpeed = this.caughtItem ? this.speed / (this.caughtItem.mass * 0.5) : this.speed;
             this.length = this.length - retractSpeed;
+            this.hookEndX = startX + Math.sin(this.angle) * this.length;
+            this.hookEndY = startY + Math.cos(this.angle) * this.length;
             if (this.length <= this.maxSwingLength) {
                 this.swinging = true;
                 this.state = 0;
                 this.caughtItem = null;
                 this.length = this.maxSwingLength;
             }
+        } else {
+            this.hookEndX = startX + Math.sin(this.angle) * this.length;
+            this.hookEndY = startY + Math.cos(this.angle) * this.length;
         }
+    }
+
+    getHookEnd() {
+        return { x: this.hookEndX, y: this.hookEndY };
     }
 }

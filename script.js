@@ -16,10 +16,9 @@ var targetScore = 100;
 var level = 1;
 var time = 60;
 var gameOver = false;
-var tntCount = 0; // Track number of TNT
-var betweenLevels = false; // Flag for level transition
+var tntCount = 0;
+var betweenLevels = false;
 
-// Initialize the Mine array
 for (var row = 0; row < rows; row++) {
     Mine[row] = [];
     for (var col = 0; col < cols; col++) {
@@ -28,7 +27,6 @@ for (var row = 0; row < rows; row++) {
 }
 
 function generateMine() {
-    // Clear the mine
     for (var row = 0; row < rows; row++) {
         for (var col = 0; col < cols; col++) {
             Mine[row][col] = null;
@@ -40,7 +38,6 @@ function generateMine() {
     var startRow = Math.floor(platformY / tileSize) + 1;
     var endRow = rows - 2;
 
-    // Create a list of available positions
     var positions = [];
     var positionCount = 0;
     for (var row = startRow; row <= endRow; row++) {
@@ -50,7 +47,6 @@ function generateMine() {
         }
     }
 
-    // Shuffle the positions
     for (var i = positionCount - 1; i > 0; i--) {
         var j = Math.floor(Math.random() * (i + 1));
         var tempRow = positions[i].row;
@@ -61,8 +57,7 @@ function generateMine() {
         positions[j].col = tempCol;
     }
 
-    // Place 6-8 gold items
-    var goldCount = Math.floor(Math.random() * 3) + 6; // 6, 7, or 8
+    var goldCount = Math.floor(Math.random() * 3) + 6;
     for (var i = 0; i < goldCount; i++) {
         if (i >= positionCount) break;
         var posRow = positions[i].row;
@@ -74,20 +69,19 @@ function generateMine() {
         if (sizeRand < 0.3) {
             size = 'small';
             mass = 1;
-            value = 15; // Increased from 10
+            value = 15;
         } else if (sizeRand < 0.6) {
             size = 'medium';
             mass = 2;
-            value = 30; // Increased from 20
+            value = 30;
         } else {
             size = 'large';
             mass = 4;
-            value = 60; // Increased from 40
+            value = 60;
         }
         Mine[posRow][posCol] = new Item('gold', size, mass, value);
     }
 
-    // Place 3-4 stone items
     var stoneCount = Math.floor(Math.random() * 2) + 3; // 3 or 4
     for (var i = goldCount; i < goldCount + stoneCount; i++) {
         if (i >= positionCount) break;
@@ -113,7 +107,6 @@ function generateMine() {
         Mine[posRow][posCol] = new Item('stone', size, mass, value);
     }
 
-    // Place 1-2 rubies starting from level 2
     if (level > 1) {
         var rubyCount = Math.floor(Math.random() * 2) + 1; // 1 or 2
         for (var i = goldCount + stoneCount; i < goldCount + stoneCount + rubyCount; i++) {
@@ -224,7 +217,6 @@ function drawDecorations() {
     ctx.fillStyle = '#808080';
     ctx.fillRect(houseX + 35, houseY - 5, 5, 5);
 
-    // Draw TNT icons next to the house
     for (var i = 0; i < tntCount; i++) {
         var tntX = houseX + 50 + (i * 15);
         var tntY = houseY + 20;
@@ -273,8 +265,10 @@ function drawPlayer() {
 
     var hookStartX = minerX + 12.5;
     var hookStartY = platformY;
-    var hookEndX = hookStartX + Math.sin(hook.angle) * hook.length;
-    var hookEndY = hookStartY + Math.cos(hook.angle) * hook.length;
+    hook.update(hookStartX, hookStartY, canvas.width, canvas.height);
+    var hookEnd = hook.getHookEnd();
+    var hookEndX = hookEnd.x;
+    var hookEndY = hookEnd.y;
 
     ctx.beginPath();
     ctx.moveTo(hookStartX, hookStartY);
@@ -290,6 +284,55 @@ function drawPlayer() {
     ctx.fillRect(hookEndX + 2, hookEndY + 4, 3, 4);
     ctx.fillStyle = '#FF4500';
     ctx.fillRect(hookEndX - 2, hookEndY + 1, 4, 2);
+
+    if (hook.state === 2 && hook.caughtItem) {
+        var x = hookEndX - (tileSize / 2);
+        var y = hookEndY;
+        if (hook.caughtItem.type === 'stone') {
+            var scale = hook.caughtItem.size === 'small' ? 1.0 : hook.caughtItem.size === 'medium' ? 1.5 : 2.0;
+            ctx.fillStyle = '#808080';
+            ctx.beginPath();
+            ctx.moveTo(x + 5 * scale, y + 5 * scale);
+            ctx.lineTo(x + 20 * scale, y + 5 * scale);
+            ctx.lineTo(x + 22 * scale, y + 10 * scale);
+            ctx.lineTo(x + 15 * scale, y + 20 * scale);
+            ctx.lineTo(x + 8 * scale, y + 18 * scale);
+            ctx.lineTo(x + 3 * scale, y + 10 * scale);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#666';
+            ctx.stroke();
+        } else if (hook.caughtItem.type === 'gold') {
+            var scale = hook.caughtItem.size === 'small' ? 1.0 : hook.caughtItem.size === 'medium' ? 1.5 : 2.0;
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.moveTo(x + 8 * scale, y + 5 * scale);
+            ctx.lineTo(x + 17 * scale, y + 5 * scale);
+            ctx.lineTo(x + 20 * scale, y + 10 * scale);
+            ctx.lineTo(x + 15 * scale, y + 15 * scale);
+            ctx.lineTo(x + 10 * scale, y + 15 * scale);
+            ctx.lineTo(x + 5 * scale, y + 10 * scale);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#DAA520';
+            ctx.stroke();
+            ctx.fillStyle = '#FFFFE0';
+            ctx.fillRect(x + 10 * scale, y + 7 * scale, 3 * scale, 3 * scale);
+        } else if (hook.caughtItem.type === 'ruby') {
+            ctx.fillStyle = '#FF4040';
+            ctx.beginPath();
+            ctx.moveTo(x + 12, y + 5);
+            ctx.lineTo(x + 17, y + 12);
+            ctx.lineTo(x + 12, y + 20);
+            ctx.lineTo(x + 7, y + 12);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#CC0000';
+            ctx.stroke();
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(x + 11, y + 9, 2, 2);
+        }
+    }
 }
 
 function updateHook() {
@@ -299,18 +342,44 @@ function updateHook() {
     var hookStartY = platformY;
     hook.update(hookStartX, hookStartY, canvas.width, canvas.height);
 
-    if (hook.state === 1 || hook.state === 2) {
-        var hookEndX = hookStartX + Math.sin(hook.angle) * hook.length;
-        var hookEndY = hookStartY + Math.cos(hook.angle) * hook.length;
+    if (hook.state === 1) {
+        var hookEnd = hook.getHookEnd();
+        var hookEndX = hookEnd.x;
+        var hookEndY = hookEnd.y;
         var hookX = hookEndX / tileSize;
         var hookY = hookEndY / tileSize;
         var gridX = Math.floor(hookX);
         var gridY = Math.floor(hookY);
 
-        if (gridX >= 0 && gridX < cols && gridY >= 0 && gridY < rows && Mine[gridY][gridX]) {
-            hook.caughtItem = Mine[gridY][gridX];
+        var closestItem = null;
+        var closestDistance = Infinity;
+        var closestRow = -1;
+        var closestCol = -1;
+
+        for (var dy = -1; dy <= 1; dy++) {
+            for (var dx = -1; dx <= 1; dx++) {
+                var checkX = gridX + dx;
+                var checkY = gridY + dy;
+                if (checkX >= 0 && checkX < cols && checkY >= 0 && checkY < rows && Mine[checkY][checkX]) {
+                    var itemCenterX = (checkX + 0.5) * tileSize;
+                    var itemCenterY = (checkY + 0.5) * tileSize;
+                    var distance = Math.sqrt(
+                        Math.pow(hookEndX - itemCenterX, 2) + Math.pow(hookEndY - itemCenterY, 2)
+                    );
+                    if (distance < closestDistance) {
+                        closestDistance = distance;
+                        closestItem = Mine[checkY][checkX];
+                        closestRow = checkY;
+                        closestCol = checkX;
+                    }
+                }
+            }
+        }
+
+        if (closestItem) {
+            hook.caughtItem = closestItem;
             score = score + hook.caughtItem.value;
-            Mine[gridY][gridX] = null;
+            Mine[closestRow][closestCol] = null;
             hook.state = 2;
         }
     }
@@ -322,7 +391,6 @@ function updateTime() {
         if (time <= 0) {
             if (score >= targetScore) {
                 betweenLevels = true;
-                // Prompt to buy TNT
                 var tntToBuy = 0;
                 var canBuyMore = true;
                 while (canBuyMore) {
@@ -341,7 +409,6 @@ function updateTime() {
                         canBuyMore = false;
                     }
                 }
-                // Proceed to next level
                 level = level + 1;
                 targetScore = targetScore + 50;
                 time = 60;
