@@ -16,11 +16,14 @@ var targetScore = 100;
 var level = 1;
 var time = 60;
 var gameOver = false;
-var tntCount = 0;
 var betweenLevels = false;
-var particles = []; // Array to store particles
+var tntCount = 0;
+var purchaseParticles = [];
+var tntButtonGlow = 0;
+var hookButtonGlow = 0;
+var continueButtonPulse = 0;
+var hookUpgradePrices = [100, 350, 750];
 
-// Initialize the Mine array
 for (var row = 0; row < rows; row++) {
     Mine[row] = [];
     for (var col = 0; col < cols; col++) {
@@ -59,7 +62,7 @@ function generateMine() {
         positions[j].col = tempCol;
     }
 
-    var goldCount = Math.floor(Math.random() * 3) + 6; // 6, 7, or 8
+    var goldCount = Math.floor(Math.random() * 3) + 6;
     for (var i = 0; i < goldCount; i++) {
         if (i >= positionCount) break;
         var posRow = positions[i].row;
@@ -84,7 +87,7 @@ function generateMine() {
         Mine[posRow][posCol] = new Item('gold', size, mass, value);
     }
 
-    var stoneCount = Math.floor(Math.random() * 2) + 3; // 3 or 4
+    var stoneCount = Math.floor(Math.random() * 2) + 3;
     for (var i = goldCount; i < goldCount + stoneCount; i++) {
         if (i >= positionCount) break;
         var posRow = positions[i].row;
@@ -110,7 +113,7 @@ function generateMine() {
     }
 
     if (level > 1) {
-        var rubyCount = Math.floor(Math.random() * 2) + 1; // 1 or 2
+        var rubyCount = Math.floor(Math.random() * 2) + 1;
         for (var i = goldCount + stoneCount; i < goldCount + stoneCount + rubyCount; i++) {
             if (i >= positionCount) break;
             var posRow = positions[i].row;
@@ -124,7 +127,30 @@ function drawBackground() {
     ctx.fillStyle = '#87CEEB';
     ctx.fillRect(0, 0, canvas.width, platformY);
 
-    ctx.fillStyle = '#D2B48C';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.beginPath();
+    ctx.arc(50, 30, 20, 0, Math.PI * 2);
+    ctx.arc(70, 30, 25, 0, Math.PI * 2);
+    ctx.arc(90, 30, 20, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(200, 50, 15, 0, Math.PI * 2);
+    ctx.arc(220, 50, 20, 0, Math.PI * 2);
+    ctx.arc(240, 50, 15, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(350, 20, 25, 0, Math.PI * 2);
+    ctx.arc(370, 20, 30, 0, Math.PI * 2);
+    ctx.arc(390, 20, 25, 0, Math.PI * 2);
+    ctx.arc(410, 20, 20, 0, Math.PI * 2);
+    ctx.fill();
+
+    var gradient = ctx.createLinearGradient(0, platformY, 0, canvas.height);
+    gradient.addColorStop(0, '#D2B48C');
+    gradient.addColorStop(1, '#8B5A2B');
+    ctx.fillStyle = gradient;
     ctx.fillRect(0, platformY, canvas.width, canvas.height - platformY);
 
     ctx.fillStyle = '#8B4513';
@@ -152,58 +178,55 @@ function drawMine() {
 
             if (Mine[row][col]) {
                 var scale = Mine[row][col].size === 'small' ? 1.0 : Mine[row][col].size === 'medium' ? 1.5 : 2.0;
-                var shadowOffsetX = 5;
-                var shadowOffsetY = 5;
-
-                // Draw shadow
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
                 ctx.beginPath();
-                ctx.ellipse(x + (tileSize * scale) / 2 + shadowOffsetX, y + (tileSize * scale) - shadowOffsetY, 
-                            tileSize * scale * 0.5, tileSize * scale * 0.2, 0, 0, Math.PI * 2);
+                ctx.ellipse(x + 12.5 * scale, y + 25 * scale, 10 * scale, 4 * scale, 0, 0, Math.PI * 2);
                 ctx.fill();
+            }
 
-                if (Mine[row][col].type === 'stone') {
-                    ctx.fillStyle = '#808080';
-                    ctx.beginPath();
-                    ctx.moveTo(x + 5 * scale, y + 5 * scale);
-                    ctx.lineTo(x + 20 * scale, y + 5 * scale);
-                    ctx.lineTo(x + 22 * scale, y + 10 * scale);
-                    ctx.lineTo(x + 15 * scale, y + 20 * scale);
-                    ctx.lineTo(x + 8 * scale, y + 18 * scale);
-                    ctx.lineTo(x + 3 * scale, y + 10 * scale);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.strokeStyle = '#666';
-                    ctx.stroke();
-                } else if (Mine[row][col].type === 'gold') {
-                    ctx.fillStyle = '#FFD700';
-                    ctx.beginPath();
-                    ctx.moveTo(x + 8 * scale, y + 5 * scale);
-                    ctx.lineTo(x + 17 * scale, y + 5 * scale);
-                    ctx.lineTo(x + 20 * scale, y + 10 * scale);
-                    ctx.lineTo(x + 15 * scale, y + 15 * scale);
-                    ctx.lineTo(x + 10 * scale, y + 15 * scale);
-                    ctx.lineTo(x + 5 * scale, y + 10 * scale);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.strokeStyle = '#DAA520';
-                    ctx.stroke();
-                    ctx.fillStyle = '#FFFFE0';
-                    ctx.fillRect(x + 10 * scale, y + 7 * scale, 3 * scale, 3 * scale);
-                } else if (Mine[row][col].type === 'ruby') {
-                    ctx.fillStyle = '#FF4040';
-                    ctx.beginPath();
-                    ctx.moveTo(x + 12, y + 5);
-                    ctx.lineTo(x + 17, y + 12);
-                    ctx.lineTo(x + 12, y + 20);
-                    ctx.lineTo(x + 7, y + 12);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.strokeStyle = '#CC0000';
-                    ctx.stroke();
-                    ctx.fillStyle = '#FFFFFF';
-                    ctx.fillRect(x + 11, y + 9, 2, 2);
-                }
+            if (Mine[row][col] && Mine[row][col].type === 'stone') {
+                var scale = Mine[row][col].size === 'small' ? 1.0 : Mine[row][col].size === 'medium' ? 1.5 : 2.0;
+                ctx.fillStyle = '#808080';
+                ctx.beginPath();
+                ctx.moveTo(x + 5 * scale, y + 5 * scale);
+                ctx.lineTo(x + 20 * scale, y + 5 * scale);
+                ctx.lineTo(x + 22 * scale, y + 10 * scale);
+                ctx.lineTo(x + 15 * scale, y + 20 * scale);
+                ctx.lineTo(x + 8 * scale, y + 18 * scale);
+                ctx.lineTo(x + 3 * scale, y + 10 * scale);
+                ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = '#666';
+                ctx.stroke();
+            } else if (Mine[row][col] && Mine[row][col].type === 'gold') {
+                var scale = Mine[row][col].size === 'small' ? 1.0 : Mine[row][col].size === 'medium' ? 1.5 : 2.0;
+                ctx.fillStyle = '#FFD700';
+                ctx.beginPath();
+                ctx.moveTo(x + 8 * scale, y + 5 * scale);
+                ctx.lineTo(x + 17 * scale, y + 5 * scale);
+                ctx.lineTo(x + 20 * scale, y + 10 * scale);
+                ctx.lineTo(x + 15 * scale, y + 15 * scale);
+                ctx.lineTo(x + 10 * scale, y + 15 * scale);
+                ctx.lineTo(x + 5 * scale, y + 10 * scale);
+                ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = '#DAA520';
+                ctx.stroke();
+                ctx.fillStyle = '#FFFFE0';
+                ctx.fillRect(x + 10 * scale, y + 7 * scale, 3 * scale, 3 * scale);
+            } else if (Mine[row][col] && Mine[row][col].type === 'ruby') {
+                ctx.fillStyle = '#FF4040';
+                ctx.beginPath();
+                ctx.moveTo(x + 12, y + 5);
+                ctx.lineTo(x + 17, y + 12);
+                ctx.lineTo(x + 12, y + 20);
+                ctx.lineTo(x + 7, y + 12);
+                ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = '#CC0000';
+                ctx.stroke();
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(x + 11, y + 9, 2, 2);
             }
         }
     }
@@ -248,6 +271,11 @@ function drawPlayer() {
 
     drawDecorations();
 
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.beginPath();
+    ctx.ellipse(minerX + 12.5, minerY + 35, 10, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+
     ctx.fillStyle = '#FFD700';
     ctx.fillRect(minerX + 3, minerY - 7, 19, 7);
     ctx.fillStyle = '#DAA520';
@@ -290,22 +318,25 @@ function drawPlayer() {
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    ctx.fillStyle = '#C0C0C0';
+    ctx.fillStyle = hook.getColor();
     ctx.fillRect(hookEndX - 5, hookEndY, 10, 4);
-    ctx.fillStyle = '#A9A9A9';
+    ctx.fillStyle = hook.upgradeLevel === 0 ? '#A9A9A9' : hook.getColor();
     ctx.fillRect(hookEndX - 5, hookEndY + 4, 3, 4);
     ctx.fillRect(hookEndX + 2, hookEndY + 4, 3, 4);
     ctx.fillStyle = '#FF4500';
     ctx.fillRect(hookEndX - 2, hookEndY + 1, 4, 2);
 
-    // Draw the caught item at the hook's tip while retracting
+    hook.particles.forEach(p => p.draw(ctx));
+
     if (hook.state === 2 && hook.caughtItem) {
         var x = hookEndX - (tileSize / 2);
         var y = hookEndY;
-        // Spawn particles
-        if (Math.random() < 0.3) { // 30% chance per frame to spawn a particle
-            particles.push(new Particle(hookEndX, hookEndY));
-        }
+        var scale = hook.caughtItem.size === 'small' ? 1.0 : hook.caughtItem.size === 'medium' ? 1.5 : 2.0;
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.beginPath();
+        ctx.ellipse(x + 12.5 * scale, y + 25 * scale, 10 * scale, 4 * scale, 0, 0, Math.PI * 2);
+        ctx.fill();
+
         if (hook.caughtItem.type === 'stone') {
             var scale = hook.caughtItem.size === 'small' ? 1.0 : hook.caughtItem.size === 'medium' ? 1.5 : 2.0;
             ctx.fillStyle = '#808080';
@@ -351,13 +382,17 @@ function drawPlayer() {
             ctx.fillRect(x + 11, y + 9, 2, 2);
         }
     }
+}
 
-    // Update and draw particles
-    particles = particles.filter(p => p.life > 0);
-    particles.forEach(p => {
-        p.update();
-        p.draw(ctx);
-    });
+function checkAllItemsCollected() {
+    for (var row = 0; row < rows; row++) {
+        for (var col = 0; col < cols; col++) {
+            if (Mine[row][col] !== null) {
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 function updateHook() {
@@ -371,31 +406,47 @@ function updateHook() {
         var hookEnd = hook.getHookEnd();
         var hookEndX = hookEnd.x;
         var hookEndY = hookEnd.y;
-        var hookX = hookEndX / tileSize;
-        var hookY = hookEndY / tileSize;
-        var gridX = Math.floor(hookX);
-        var gridY = Math.floor(hookY);
 
         var closestItem = null;
-        var closestDistance = Infinity;
         var closestRow = -1;
         var closestCol = -1;
 
-        for (var dy = -1; dy <= 1; dy++) {
-            for (var dx = -1; dx <= 1; dx++) {
-                var checkX = gridX + dx;
-                var checkY = gridY + dy;
-                if (checkX >= 0 && checkX < cols && checkY >= 0 && checkY < rows && Mine[checkY][checkX]) {
-                    var itemCenterX = (checkX + 0.5) * tileSize;
-                    var itemCenterY = (checkY + 0.5) * tileSize;
-                    var distance = Math.sqrt(
-                        Math.pow(hookEndX - itemCenterX, 2) + Math.pow(hookEndY - itemCenterY, 2)
-                    );
-                    if (distance < closestDistance) {
-                        closestDistance = distance;
-                        closestItem = Mine[checkY][checkX];
-                        closestRow = checkY;
-                        closestCol = checkX;
+        for (var row = 0; row < rows; row++) {
+            for (var col = 0; col < cols; col++) {
+                if (Mine[row][col]) {
+                    var item = Mine[row][col];
+                    var scale = item.size === 'small' ? 1.0 : item.size === 'medium' ? 1.5 : 2.0;
+                    var itemX = col * tileSize;
+                    var itemY = row * tileSize;
+                    var hitboxWidth, hitboxHeight, hitboxX, hitboxY;
+
+                    if (item.type === 'stone') {
+                        hitboxX = itemX + 3 * scale;
+                        hitboxY = itemY + 5 * scale;
+                        hitboxWidth = (22 * scale) - (3 * scale);
+                        hitboxHeight = (20 * scale) - (5 * scale);
+                    } else if (item.type === 'gold') {
+                        hitboxX = itemX + 5 * scale;
+                        hitboxY = itemY + 5 * scale;
+                        hitboxWidth = (20 * scale) - (5 * scale);
+                        hitboxHeight = (15 * scale) - (5 * scale);
+                    } else if (item.type === 'ruby') {
+                        hitboxX = itemX + 7;
+                        hitboxY = itemY + 5;
+                        hitboxWidth = 17 - 7;
+                        hitboxHeight = 20 - 5;
+                    }
+
+                    if (
+                        hookEndX >= hitboxX &&
+                        hookEndX <= hitboxX + hitboxWidth &&
+                        hookEndY >= hitboxY &&
+                        hookEndY <= hitboxY + hitboxHeight
+                    ) {
+                        closestItem = item;
+                        closestRow = row;
+                        closestCol = col;
+                        break;
                     }
                 }
             }
@@ -408,6 +459,20 @@ function updateHook() {
             hook.state = 2;
         }
     }
+
+    if (hook.state === 2 && hook.caughtItem) {
+        var hookEnd = hook.getHookEnd();
+        var particleColor = hook.caughtItem.type === 'gold' ? '#FFD700' : hook.caughtItem.type === 'stone' ? '#808080' : '#FF4040';
+        if (Math.random() < 0.3) {
+            for (var i = 0; i < 3; i++) {
+                hook.particles.push(new Particle(hookEnd.x, hookEnd.y, particleColor));
+            }
+        }
+    }
+
+    if (checkAllItemsCollected() && !betweenLevels && !gameOver) {
+        betweenLevels = true;
+    }
 }
 
 function updateTime() {
@@ -416,56 +481,291 @@ function updateTime() {
         if (time <= 0) {
             if (score >= targetScore) {
                 betweenLevels = true;
-                // Buy TNT
-                var tntToBuy = 0;
-                var canBuyMoreTNT = true;
-                while (canBuyMoreTNT) {
-                    var response = prompt('Level complete! You have ' + score + ' money. Buy TNT? (50 money each, type number of TNT to buy, 0 to continue):');
-                    tntToBuy = parseInt(response);
-                    if (isNaN(tntToBuy) || tntToBuy < 0) {
-                        alert('Please enter a valid number.');
-                        continue;
-                    }
-                    var totalCost = tntToBuy * 50;
-                    if (totalCost > score) {
-                        alert('Not enough money! You can buy up to ' + Math.floor(score / 50) + ' TNT.');
-                    } else {
-                        tntCount = tntCount + tntToBuy;
-                        score = score - totalCost;
-                        canBuyMoreTNT = false;
-                    }
-                }
-                // Buy Hook Upgrade
-                var canBuyUpgrade = true;
-                while (canBuyUpgrade) {
-                    var upgradeCost = 100;
-                    var upgradeResponse = prompt('You have ' + score + ' money. Upgrade hook speed for ' + upgradeCost + ' money? (Current speed: ' + hook.speed.toFixed(1) + ', type "yes" to upgrade, "no" to continue):');
-                    if (upgradeResponse.toLowerCase() === 'yes') {
-                        if (score >= upgradeCost) {
-                            hook.upgradeSpeed();
-                            score -= upgradeCost;
-                            alert('Hook speed upgraded to ' + hook.speed.toFixed(1) + '!');
-                        } else {
-                            alert('Not enough money! You need ' + upgradeCost + ' money to upgrade.');
-                            canBuyUpgrade = false;
-                        }
-                    } else {
-                        canBuyUpgrade = false;
-                    }
-                }
-                // Proceed to next level
-                level = level + 1;
-                targetScore = targetScore + 50;
-                time = 60;
-                generateMine();
-                betweenLevels = false;
             } else {
                 gameOver = true;
-                alert('Time Up! Score: ' + score);
             }
         }
     }
 }
+
+function drawLevelEndScreen() {
+    var gradient = ctx.createLinearGradient(50, 50, 50, 400);
+    gradient.addColorStop(0, '#8B4513');
+    gradient.addColorStop(1, '#5A2E0F');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(50, 50, 400, 350);
+
+    ctx.strokeStyle = '#FFD700';
+    ctx.lineWidth = 5;
+    ctx.strokeRect(50, 50, 400, 350);
+
+    ctx.font = '30px Arial';
+    ctx.fillStyle = '#FFD700';
+    ctx.textAlign = 'center';
+    ctx.fillText('Level ' + (level) + ' Complete!', canvas.width/2, 100);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillText('Level ' + (level) + ' Complete!', canvas.width/2 + 2, 102);
+
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath();
+    ctx.arc(200, 140, 10, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#FFFFE0';
+    ctx.fillRect(198, 138, 4, 4);
+    ctx.font = '20px Arial';
+    ctx.fillStyle = '#FFD700';
+    ctx.fillText('Money: ' + score, 250, 145);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillText('Money: ' + score, 252, 147);
+
+    ctx.fillStyle = '#808080';
+    ctx.fillRect(70, 70, 20, 5);
+    ctx.fillStyle = '#8B4513';
+    ctx.fillRect(80, 65, 5, 15);
+
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath();
+    ctx.moveTo(420, 70);
+    ctx.lineTo(430, 70);
+    ctx.lineTo(435, 80);
+    ctx.lineTo(425, 85);
+    ctx.lineTo(415, 80);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(410, 90);
+    ctx.lineTo(420, 90);
+    ctx.lineTo(425, 100);
+    ctx.lineTo(415, 105);
+    ctx.lineTo(405, 100);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#808080';
+    ctx.fillRect(60, 350, 15, 20);
+    ctx.fillStyle = '#FFFF00';
+    ctx.fillRect(62, 352, 11, 10);
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath();
+    ctx.moveTo(60, 350);
+    ctx.lineTo(67, 340);
+    ctx.lineTo(75, 350);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#FF4040';
+    ctx.beginPath();
+    ctx.moveTo(420, 360);
+    ctx.lineTo(430, 360);
+    ctx.lineTo(435, 370);
+    ctx.lineTo(425, 375);
+    ctx.lineTo(415, 370);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#00FFFF';
+    ctx.beginPath();
+    ctx.moveTo(410, 370);
+    ctx.lineTo(420, 370);
+    ctx.lineTo(425, 380);
+    ctx.lineTo(415, 385);
+    ctx.lineTo(405, 380);
+    ctx.closePath();
+    ctx.fill();
+
+    var tntGradient = ctx.createLinearGradient(75, 180, 75, 230);
+    tntGradient.addColorStop(0, '#FF4500');
+    tntGradient.addColorStop(1, '#CC3700');
+    ctx.fillStyle = tntGradient;
+    ctx.fillRect(75, 180, 150, 50);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.fillRect(80, 185, 140, 40);
+    ctx.fillStyle = '#FF4500';
+    ctx.fillRect(85, 190, 15, 20);
+    ctx.fillStyle = '#808080';
+    ctx.fillRect(88, 185, 9, 5);
+    ctx.fillStyle = '#FFFF00';
+    ctx.fillRect(90, 186, 5, 3);
+    if (tntButtonGlow > 0) {
+        ctx.strokeStyle = `rgba(255, 215, 0, ${tntButtonGlow})`;
+        ctx.lineWidth = 3;
+        ctx.strokeRect(75, 180, 150, 50);
+        tntButtonGlow -= 0.05;
+    }
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '14px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText('Buy TNT', 110, 195);
+    ctx.fillText('(50)', 110, 210);
+    ctx.font = '12px Arial';
+    ctx.fillText('TNT: ' + tntCount, 110, 225);
+
+    var hookGradient = ctx.createLinearGradient(275, 180, 275, 230);
+    hookGradient.addColorStop(0, '#C0C0C0');
+    hookGradient.addColorStop(1, '#A9A9A9');
+    ctx.fillStyle = hookGradient;
+    ctx.fillRect(275, 180, 150, 50);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.fillRect(280, 185, 140, 40);
+    ctx.strokeStyle = '#8B4513';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(285, 195);
+    ctx.lineTo(295, 205);
+    ctx.stroke();
+    ctx.fillStyle = hook.getColor();
+    ctx.fillRect(293, 205, 10, 4);
+    ctx.fillStyle = hook.upgradeLevel === 0 ? '#A9A9A9' : hook.getColor();
+    ctx.fillRect(293, 209, 3, 4);
+    ctx.fillRect(300, 209, 3, 4);
+    if (hookButtonGlow > 0) {
+        ctx.strokeStyle = `rgba(255, 215, 0, ${hookButtonGlow})`;
+        ctx.lineWidth = 3;
+        ctx.strokeRect(275, 180, 150, 50);
+        hookButtonGlow -= 0.05;
+    }
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '14px Arial';
+    if (hook.upgradeLevel < hook.maxUpgradeLevel) {
+        var nextPrice = hookUpgradePrices[hook.upgradeLevel];
+        ctx.fillText('Upgrade Hook', 310, 195);
+        ctx.fillText('(' + nextPrice + ')', 310, 210);
+    } else {
+        ctx.fillText('Max Level', 310, 202);
+    }
+    ctx.font = '12px Arial';
+    ctx.fillText('Level: ' + hook.upgradeLevel, 310, 225);
+
+    continueButtonPulse += 0.02;
+    var pulseAlpha = 0.5 + Math.sin(continueButtonPulse) * 0.2;
+    var continueGradient = ctx.createLinearGradient(200, 300, 200, 350);
+    continueGradient.addColorStop(0, '#FFD700');
+    continueGradient.addColorStop(1, '#DAA520');
+    ctx.fillStyle = continueGradient;
+    ctx.fillRect(200, 300, 100, 50);
+    ctx.strokeStyle = `rgba(255, 255, 255, ${pulseAlpha})`;
+    ctx.lineWidth = 3;
+    ctx.strokeRect(200, 300, 100, 50);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.fillRect(205, 305, 90, 40);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.textAlign = 'center';
+    ctx.font = '16px Arial';
+    ctx.fillText('Continue', 250, 330);
+    ctx.textAlign = 'start';
+
+    purchaseParticles = purchaseParticles.filter(p => p.life > 0);
+    purchaseParticles.forEach(p => {
+        p.update();
+        p.draw(ctx);
+    });
+}
+
+function drawGameOverScreen() {
+    ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = 'white';
+    ctx.font = '40px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Game Over', canvas.width/2, canvas.height/2 - 40);
+    ctx.font = '20px Arial';
+    ctx.fillText('Score: ' + score, canvas.width/2, canvas.height/2);
+    ctx.fillStyle = '#FFD700';
+    ctx.fillRect(canvas.width/2 - 50, canvas.height/2 + 60, 100, 40);
+    ctx.fillStyle = 'black';
+    ctx.fillText('Restart', canvas.width/2, canvas.height/2 + 85);
+    ctx.textAlign = 'start';
+}
+
+function restartGame() {
+    playerX = cols / 2;
+    hook = new Hook();
+    score = 0;
+    targetScore = 100;
+    level = 1;
+    time = 60;
+    gameOver = false;
+    betweenLevels = false;
+    tntCount = 0;
+    purchaseParticles = [];
+    tntButtonGlow = 0;
+    hookButtonGlow = 0;
+    continueButtonPulse = 0;
+    generateMine();
+}
+
+document.addEventListener('click', function(e) {
+    var rect = canvas.getBoundingClientRect();
+    var clickX = e.clientX - rect.left;
+    var clickY = e.clientY - rect.top;
+
+    if (betweenLevels) {
+        // Buy TNT button
+        if (
+            clickX >= 75 &&
+            clickX <= 225 &&
+            clickY >= 180 &&
+            clickY <= 230
+        ) {
+            if (score >= 50) {
+                tntCount += 1;
+                score -= 50;
+                tntButtonGlow = 1;
+                for (var i = 0; i < 10; i++) {
+                    purchaseParticles.push(new Particle(150, 205, '#FFD700', true, 'tnt'));
+                }
+            }
+        }
+
+        if (
+            clickX >= 275 &&
+            clickX <= 425 &&
+            clickY >= 180 &&
+            clickY <= 230
+        ) {
+            if (hook.upgradeLevel < hook.maxUpgradeLevel) {
+                var price = hookUpgradePrices[hook.upgradeLevel];
+                if (score >= price) {
+                    hook.upgrade();
+                    score -= price;
+                    hookButtonGlow = 1;
+                    for (var i = 0; i < 10; i++) {
+                        purchaseParticles.push(new Particle(350, 205, '#C0C0C0', true, 'hook'));
+                    }
+                }
+            }
+        }
+
+        if (
+            clickX >= 200 &&
+            clickX <= 300 &&
+            clickY >= 300 &&
+            clickY <= 350
+        ) {
+            level += 1;
+            targetScore += 50;
+            time = 60;
+            generateMine();
+            betweenLevels = false;
+        }
+    } else if (gameOver) {
+        if (
+            clickX >= canvas.width/2 - 50 &&
+            clickX <= canvas.width/2 + 50 &&
+            clickY >= canvas.height/2 + 60 &&
+            clickY <= canvas.height/2 + 100
+        ) {
+            restartGame();
+        }
+    } else {
+        if (hook.state === 0) {
+            hook.shoot();
+        } else if (hook.state === 2 && tntCount > 0 && hook.caughtItem) {
+            tntCount -= 1;
+            hook.detonateTNT();
+        }
+    }
+});
 
 document.addEventListener('keydown', function(e) {
     if (gameOver || betweenLevels) return;
@@ -474,26 +774,11 @@ document.addEventListener('keydown', function(e) {
         playerX = playerX - 1;
     } else if (e.code === 'ArrowRight' && playerX < cols - 1) {
         playerX = playerX + 1;
-    }
-});
-
-document.addEventListener('click', function(e) {
-    if (gameOver || betweenLevels) return;
-    if (hook.state === 0) {
-        hook.shoot();
-    } else if (hook.state === 2 && tntCount > 0) {
-        tntCount = tntCount - 1;
-        hook.detonateTNT();
-    }
-});
-
-document.addEventListener('keydown', function(e) {
-    if (gameOver || betweenLevels) return;
-    if (e.code === 'Space') {
+    } else if (e.code === 'Space') {
         if (hook.state === 0) {
             hook.shoot();
-        } else if (hook.state === 2 && tntCount > 0) {
-            tntCount = tntCount - 1;
+        } else if (hook.state === 2 && tntCount > 0 && hook.caughtItem) {
+            tntCount -= 1;
             hook.detonateTNT();
         }
     }
@@ -504,28 +789,16 @@ function gameLoop() {
     drawBackground();
     drawMine();
 
-    if (gameOver) {
-        ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = 'white';
-        ctx.font = '40px Arial';
-        ctx.fillText('Game Over', canvas.width/2 - 80, canvas.height/2);
-        return;
+    if (!betweenLevels) {
+        updateHook();
+        updateTime();
     }
+
+    drawPlayer();
 
     if (betweenLevels) {
-        ctx.fillStyle = 'rgba(0, 255, 0, 0.5)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = 'white';
-        ctx.font = '30px Arial';
-        ctx.fillText('Level ' + (level - 1) + ' Complete!', canvas.width/2 - 100, canvas.height/2 - 20);
-        ctx.fillText('Money: ' + score, canvas.width/2 - 50, canvas.height/2 + 20);
-        return;
+        drawLevelEndScreen();
     }
-
-    updateHook();
-    updateTime();
-    drawPlayer();
 
     ctx.fillStyle = '#FFD700';
     ctx.fillRect(0, 0, canvas.width, 30);
@@ -535,7 +808,10 @@ function gameLoop() {
     ctx.fillText('Target: ' + targetScore, 150, 20);
     ctx.fillText('Level: ' + level, 300, 20);
     ctx.fillText('Time: ' + Math.floor(time), 400, 20);
-    ctx.fillText('TNT: ' + tntCount, 450, 20);
+
+    if (gameOver) {
+        drawGameOverScreen();
+    }
 }
 
 generateMine();
