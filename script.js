@@ -506,3 +506,58 @@ function updateHook() {
         }
     }
 }
+
+function detonateTNT(explosionX, explosionY) {
+    const explosionRadius = 3;
+    const gridX = Math.floor(explosionX / tileSize);
+    const gridY = Math.floor(explosionY / tileSize);
+    
+    let destroyedItems = 0;
+    
+    for (let dy = -explosionRadius; dy <= explosionRadius; dy++) {
+        for (let dx = -explosionRadius; dx <= explosionRadius; dx++) {
+            const checkX = gridX + dx;
+            const checkY = gridY + dy;
+            
+            if (Math.sqrt(dx*dx + dy*dy) > explosionRadius) continue;
+            
+            if (checkX >= 0 && checkX < cols && checkY >= 0 && checkY < rows && Mine[checkY][checkX]) {
+                const itemX = (checkX + 0.5) * tileSize;
+                const itemY = (checkY + 0.5) * tileSize;
+                createParticles(itemX, itemY, '#FF4500', 15);
+                
+                const distance = Math.sqrt(dx*dx + dy*dy);
+                if (distance < explosionRadius - 1 || Math.random() > 0.5) {
+                    Mine[checkY][checkX] = null;
+                    destroyedItems++;
+                }
+            }
+        }
+    }
+    
+    if (destroyedItems > 0) {
+        score += destroyedItems * 5;
+    }
+}
+
+function createParticles(x, y, color, count = 15) {
+    for (let i = 0; i < count; i++) {
+        particles.push(new Particle(x, y, color));
+    }
+}
+
+function updateParticles() {
+    for (let i = particles.length - 1; i >= 0; i--) {
+        particles[i].update();
+        if (particles[i].life <= 0) {
+            particles.splice(i, 1);
+        }
+    }
+}
+
+function drawParticles() {
+    for (const particle of particles) {
+        particle.draw(ctx);
+    }
+}
+
