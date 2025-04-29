@@ -584,3 +584,112 @@ function updateTime() {
     }
 }
 
+function showShop() {
+    betweenLevels = true;
+    shopLevel.textContent = level;
+    speedLevel.textContent = upgrades.speed;
+    strengthLevel.textContent = upgrades.strength;
+    valueLevel.textContent = upgrades.value;
+    speedCost.textContent = upgrades.speedCost;
+    strengthCost.textContent = upgrades.strengthCost;
+    valueCost.textContent = upgrades.valueCost;
+    const nextTarget = targetScore + 100 + ((level + 1) * 25);
+    document.getElementById('nextLevelNumber').textContent = level + 1;
+    document.getElementById('nextLevelTarget').textContent = nextTarget;
+    shop.classList.remove('hidden');
+}
+
+function hideShop() {
+    betweenLevels = false;
+    shop.classList.add('hidden');
+    level++;
+    targetScore += 100 + (level * 25);
+    time = 80 + (level * 2);
+    generateMine();
+}
+
+function checkLevelCompletion() {
+    let itemsRemaining = 0;
+    for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+            if (Mine[row][col] && Mine[row][col].value > 0) {
+                itemsRemaining++;
+            }
+        }
+    }
+    
+    if (itemsRemaining === 0 && !betweenLevels) {
+        showShop();
+    }
+}
+
+document.addEventListener('keydown', function(e) {
+    if (gameOver || betweenLevels) return;
+
+    if (e.code === 'ArrowLeft' && playerX > 0) {
+        playerX -= 1;
+    } else if (e.code === 'ArrowRight' && playerX < cols - 1) {
+        playerX += 1;
+    } else if (e.code === 'Space') {
+        if (hook.state === 0) {
+            hook.shoot();
+        } else if (hook.state === 2 && hook.caughtItem && hook.caughtItem.type === 'tnt') {
+            const hookEnd = hook.getHookEnd();
+            detonateTNT(hookEnd.x, hookEnd.y);
+            hook.detonateTNT();
+        }
+    }
+});
+
+canvas.addEventListener('click', function(e) {
+    if (gameOver || betweenLevels) return;
+    
+    if (hook.state === 0) {
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        const minerX = playerX * tileSize + 12.5;
+        const minerY = platformY;
+        
+        const dx = mouseX - minerX;
+        const dy = mouseY - minerY;
+        const angle = Math.atan2(dx, dy);
+        
+        hook.shoot(angle);
+    }
+});
+
+buySpeed.addEventListener('click', function() {
+    if (score >= upgrades.speedCost) {
+        score -= upgrades.speedCost;
+        upgrades.speed++;
+        hook.speed += 0.75;
+        upgrades.speedCost = Math.floor(upgrades.speedCost * 1.8);
+        speedLevel.textContent = upgrades.speed;
+        speedCost.textContent = upgrades.speedCost;
+    }
+});
+
+buyStrength.addEventListener('click', function() {
+    if (score >= upgrades.strengthCost) {
+        score -= upgrades.strengthCost;
+        upgrades.strength++;
+        hook.strength += 0.5;
+        upgrades.strengthCost = Math.floor(upgrades.strengthCost * 1.6);
+        strengthLevel.textContent = upgrades.strength;
+        strengthCost.textContent = upgrades.strengthCost;
+    }
+});
+
+buyValue.addEventListener('click', function() {
+    if (score >= upgrades.valueCost) {
+        score -= upgrades.valueCost;
+        upgrades.value++;
+        upgrades.valueCost = Math.floor(upgrades.valueCost * 2);
+        valueLevel.textContent = upgrades.value;
+        valueCost.textContent = upgrades.valueCost;
+    }
+});
+
+nextLevel.addEventListener('click', hideShop);
+
