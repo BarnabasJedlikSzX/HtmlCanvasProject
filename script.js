@@ -693,3 +693,73 @@ buyValue.addEventListener('click', function() {
 
 nextLevel.addEventListener('click', hideShop);
 
+function gameLoop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawBackground();
+    drawMine();
+    updateParticles();
+    drawParticles();
+
+    if (gameOver) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'white';
+        ctx.font = '40px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Játék Vége', canvas.width/2, canvas.height/2 - 20);
+        ctx.font = '20px Arial';
+        ctx.fillText(`Végső pontszám: ${score}`, canvas.width/2, canvas.height/2 + 20);
+        ctx.fillText('Frissíts az újraindításhoz', canvas.width/2, canvas.height/2 + 50);
+        ctx.textAlign = 'left';
+        return;
+    }
+
+    if (betweenLevels) {
+        return;
+    }
+
+    updateHook();
+    updateTime();
+    checkLevelCompletion();
+    drawPlayer();
+
+    ctx.fillStyle = 'rgba(255, 215, 0, 0.7)';
+    ctx.fillRect(0, 0, canvas.width, 30);
+    
+    ctx.fillStyle = 'black';
+    ctx.font = '16px Arial';
+    ctx.fillText('Pontszám: ' + score, 10, 20);
+    
+    const progressWidth = 100;
+    const progress = Math.min(score / targetScore, 1);
+    ctx.fillText('Cél: ', 150, 20);
+    ctx.fillStyle = '#DDD';
+    ctx.fillRect(210, 10, progressWidth, 10);
+    ctx.fillStyle = '#4CAF50';
+    ctx.fillRect(210, 10, progressWidth * progress, 10);
+    ctx.fillStyle = 'black';
+    ctx.fillText(`${Math.floor(progress * 100)}%`, 320, 20);
+    
+    ctx.fillText('Szint: ' + level, 350, 20);
+    
+    const timeWidth = 60;
+    const timeProgress = time / 60;
+    ctx.fillText('Idő: ', 400, 20);
+    ctx.fillStyle = time < 15 ? '#FF5555' : '#55FF55';
+    ctx.fillRect(450, 10, timeWidth * timeProgress, 10);
+
+    for (let i = floatingTexts.length - 1; i >= 0; i--) {
+        const ft = floatingTexts[i];
+        ctx.fillStyle = ft.color;
+        ctx.font = '16px Arial';
+        ctx.fillText(ft.text, ft.x, ft.y);
+        ft.y -= 1;
+        ft.life--;
+        if (ft.life <= 0) {
+            floatingTexts.splice(i, 1);
+        }
+    }
+}
+
+generateMine();
+setInterval(gameLoop, 1000 / 60);
