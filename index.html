@@ -7,7 +7,38 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <canvas id="gameCanvas" width="500" height="500"></canvas>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="500" height="500"></canvas>
+        <div id="shop" class="hidden">
+            <h2>Shop - Level <span id="shopLevel">1</span></h2>
+            <div class="shop-item">
+                <h3>Hook Speed</h3>
+                <p>Current: Level <span id="speedLevel">1</span></p>
+                <p>Faster hook movement</p>
+                <p>Cost: $<span id="speedCost">100</span></p>
+                <button id="buySpeed">Upgrade</button>
+            </div>
+            <div class="shop-item">
+                <h3>Hook Strength</h3>
+                <p>Current: Level <span id="strengthLevel">1</span></p>
+                <p>Pull heavier items faster</p>
+                <p>Cost: $<span id="strengthCost">150</span></p>
+                <button id="buyStrength">Upgrade</button>
+            </div>
+            <div class="shop-item">
+                <h3>Item Value</h3>
+                <p>Current: Level <span id="valueLevel">1</span></p>
+                <p>Items worth more money</p>
+                <p>Cost: $<span id="valueCost">200</span></p>
+                <button id="buyValue">Upgrade</button>
+            </div>
+            <button id="nextLevel">Start Level <span id="nextLevelNumber">2</span> ($<span id="nextLevelTarget">250</span> target)</button>
+        </div>
+    </div>
+    <audio id="goldSound" src="https://assets.mixkit.co/sfx/preview/mixkit-coin-win-notification-1992.mp3" preload="auto"></audio>
+    <audio id="stoneSound" src="https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3" preload="auto"></audio>
+    <audio id="gemSound" src="https://assets.mixkit.co/sfx/preview/mixkit-bonus-earned-in-video-game-2058.mp3" preload="auto"></audio>
+    <audio id="tntSound" src="https://assets.mixkit.co/sfx/preview/mixkit-explosion-impact-1684.mp3" preload="auto"></audio>
     <script type="module" src="classes.js"></script>
     <script type="module" src="script.js"></script>
 </body>
