@@ -4,34 +4,6 @@ export class Item {
         this.size = size;
         this.mass = mass;
         this.value = value;
-        this.caught = false;
-    }
-}
-
-export class Particle {
-    constructor(x, y, color) {
-        this.x = x;
-        this.y = y;
-        this.color = color;
-        this.size = Math.random() * 3 + 2;
-        this.speedX = Math.random() * 4 - 2;
-        this.speedY = Math.random() * 4 - 2;
-        this.life = 30;
-    }
-    
-    update() {
-        this.x += this.speedX;
-        this.y += this.speedY;
-        this.life--;
-    }
-    
-    draw(ctx) {
-        ctx.fillStyle = this.color;
-        ctx.globalAlpha = this.life / 30;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.globalAlpha = 1;
     }
 }
 
@@ -40,14 +12,15 @@ export class Hook {
         this.angle = 0;
         this.length = 40;
         this.maxSwingLength = 40;
-        this.speed = 2.5;
+        this.baseSpeed = 5; // Base speed
+        this.speed = this.baseSpeed; // Current speed, can be upgraded
+        this.speedUpgradeLevel = 0; // Track upgrade level
         this.swinging = true;
         this.state = 0; // 0: swinging, 1: shooting, 2: retracting
-        this.swingSpeed = 0.04;
+        this.swingSpeed = 0.06;
         this.caughtItem = null;
         this.hookEndX = 0;
         this.hookEndY = 0;
-        this.strength = 1; // Upgradeable
     }
 
     swing() {
@@ -64,25 +37,25 @@ export class Hook {
         }
     }
 
-    shoot(angle) {
+    shoot() {
         if (this.state === 0) {
-            if (angle !== undefined) {
-                this.angle = angle;
-            }
             this.swinging = false;
             this.state = 1;
         }
     }
 
     detonateTNT() {
-        if (this.state === 2 && this.caughtItem && this.caughtItem.type === 'tnt') {
+        if (this.state === 2 && this.caughtItem) {
             this.caughtItem = null;
             this.swinging = true;
             this.state = 0;
             this.length = this.maxSwingLength;
-            return true;
         }
-        return false;
+    }
+
+    upgradeSpeed() {
+        this.speedUpgradeLevel += 1;
+        this.speed = this.baseSpeed + (this.speedUpgradeLevel * 0.5); // Increase speed by 0.5 per upgrade
     }
 
     update(startX, startY, canvasWidth, canvasHeight) {
@@ -95,7 +68,7 @@ export class Hook {
                 this.state = 2;
             }
         } else if (this.state === 2) {
-            const retractSpeed = this.caughtItem ? this.speed / (this.caughtItem.mass * (0.5 / this.strength)) : this.speed;
+            var retractSpeed = this.caughtItem ? this.speed / (this.caughtItem.mass * 0.5) : this.speed;
             this.length = this.length - retractSpeed;
             this.hookEndX = startX + Math.sin(this.angle) * this.length;
             this.hookEndY = startY + Math.cos(this.angle) * this.length;
@@ -113,5 +86,31 @@ export class Hook {
 
     getHookEnd() {
         return { x: this.hookEndX, y: this.hookEndY };
+    }
+}
+
+export class Particle {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.vx = (Math.random() - 0.5) * 2; // Random velocity X
+        this.vy = (Math.random() - 0.5) * 2; // Random velocity Y
+        this.life = 1; // Life starts at 1
+        this.size = Math.random() * 3 + 1; // Size between 1 and 4
+        this.color = `hsl(${Math.random() * 360}, 70%, 50%)`; // Random color
+    }
+
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.life -= 0.05; // Fade out over time
+    }
+
+    draw(ctx) {
+        if (this.life <= 0) return;
+        ctx.fillStyle = this.color;
+        ctx.globalAlpha = this.life;
+        ctx.fillRect(this.x, this.y, this.size, this.size);
+        ctx.globalAlpha = 1; // Reset alpha
     }
 }
