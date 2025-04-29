@@ -561,3 +561,26 @@ function drawParticles() {
     }
 }
 
+function createFloatingText(text, x, y, color) {
+    floatingTexts.push({
+        text: text,
+        x: x,
+        y: y,
+        color: color,
+        life: 60
+    });
+}
+
+function updateTime() {
+    if (!gameOver && !betweenLevels) {
+        time -= 1 / 60;
+        if (time <= 0) {
+            if (score >= targetScore) {
+                showShop();
+            } else {
+                gameOver = true;
+            }
+        }
+    }
+}
+
