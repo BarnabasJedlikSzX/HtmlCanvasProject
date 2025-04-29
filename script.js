@@ -419,3 +419,90 @@ function drawPlayer() {
         }
     }
 }
+
+function updateHook() {
+    hook.swing();
+
+    const hookStartX = playerX * tileSize + 12.5;
+    const hookStartY = platformY;
+    hook.update(hookStartX, hookStartY, canvas.width, canvas.height);
+
+    if (hook.state === 1) {
+        const hookEnd = hook.getHookEnd();
+        const hookEndX = hookEnd.x;
+        const hookEndY = hookEnd.y;
+        const hookX = hookEndX / tileSize;
+        const hookY = hookEndY / tileSize;
+        const gridX = Math.floor(hookX);
+        const gridY = Math.floor(hookY);
+
+        let closestItem = null;
+        let closestDistance = Infinity;
+        let closestRow = -1;
+        let closestCol = -1;
+
+        for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+                const checkX = gridX + dx;
+                const checkY = gridY + dy;
+                if (checkX >= 0 && checkX < cols && checkY >= 0 && checkY < rows && Mine[checkY][checkX]) {
+                    const itemCenterX = (checkX + 0.5) * tileSize;
+                    const itemCenterY = (checkY + 0.5) * tileSize;
+                    const distance = Math.sqrt(
+                        Math.pow(hookEndX - itemCenterX, 2) + Math.pow(hookEndY - itemCenterY, 2)
+                    );
+                    if (distance < closestDistance) {
+                        closestDistance = distance;
+                        closestItem = Mine[checkY][checkX];
+                        closestRow = checkY;
+                        closestCol = checkX;
+                    }
+                }
+            }
+        }
+
+        if (closestItem && closestDistance < 20) {
+            hook.caughtItem = closestItem;
+            Mine[closestRow][closestCol] = null;
+            hook.state = 2;
+            
+            switch (closestItem.type) {
+                case 'gold':
+                    goldSound.currentTime = 0;
+                    goldSound.play();
+                    createParticles(hookEndX, hookEndY, '#FFD700');
+                    break;
+                case 'stone':
+                    stoneSound.currentTime = 0;
+                    stoneSound.play();
+                    createParticles(hookEndX, hookEndY, '#808080');
+                    break;
+                case 'ruby':
+                case 'diamond':
+                    gemSound.currentTime = 0;
+                    gemSound.play();
+                    createParticles(hookEndX, hookEndY, closestItem.type === 'ruby' ? '#FF4040' : '#00BFFF');
+                    break;
+                case 'tnt':
+                    tntSound.currentTime = 0;
+                    tntSound.play();
+                    createParticles(hookEndX, hookEndY, '#FF4500', 30);
+                    break;
+            }
+        }
+    } else if (hook.state === 2 && hook.caughtItem) {
+        if (hook.length <= hook.maxSwingLength) {
+            if (hook.caughtItem.type !== 'tnt') {
+                const value = hook.caughtItem.value;
+                score += value;
+                createFloatingText(`+${value}`, hook.hookEndX, hook.hookEndY,
+                                 hook.caughtItem.type === 'gold' ? '#FFD700' :
+                                 hook.caughtItem.type === 'ruby' ? '#FF4040' :
+                                 hook.caughtItem.type === 'diamond' ? '#00BFFF' : '#808080');
+            } else {
+                createFloatingText('TNT eltávolítva', hook.hookEndX, hook.hookEndY, '#FF4500');
+            }
+            hook.caughtItem = null;
+        }
+    }
+}
