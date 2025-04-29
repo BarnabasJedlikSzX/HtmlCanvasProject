@@ -16,7 +16,6 @@ var targetScore = 100;
 var level = 1;
 var time = 60;
 var gameOver = false;
-var tntCount = 0;
 var betweenLevels = false;
 
 for (var row = 0; row < rows; row++) {
@@ -217,16 +216,7 @@ function drawDecorations() {
     ctx.fillStyle = '#808080';
     ctx.fillRect(houseX + 35, houseY - 5, 5, 5);
 
-    for (var i = 0; i < tntCount; i++) {
-        var tntX = houseX + 50 + (i * 15);
-        var tntY = houseY + 20;
-        ctx.fillStyle = '#FF4500';
-        ctx.fillRect(tntX, tntY, 10, 15);
-        ctx.fillStyle = '#808080';
-        ctx.fillRect(tntX + 3, tntY - 5, 4, 5);
-        ctx.fillStyle = '#FFFF00';
-        ctx.fillRect(tntX + 4, tntY - 3, 2, 3);
-    }
+
 }
 
 function drawPlayer() {
@@ -388,35 +378,22 @@ function updateHook() {
 function updateTime() {
     if (gameOver === false && !betweenLevels) {
         time = time - (1 / 60);
-        if (time <= 0) {
+        if (time <= 0 || Mine.length === 0) {
             if (score >= targetScore) {
                 betweenLevels = true;
-                var tntToBuy = 0;
-                var canBuyMore = true;
-                while (canBuyMore) {
-                    var response = prompt('Level complete! You have ' + score + ' money. Buy TNT? (50 money each, type number of TNT to buy, 0 to continue):');
-                    tntToBuy = parseInt(response);
-                    if (isNaN(tntToBuy) || tntToBuy < 0) {
-                        alert('Please enter a valid number.');
-                        continue;
-                    }
-                    var totalCost = tntToBuy * 50;
-                    if (totalCost > score) {
-                        alert('Not enough money! You can buy up to ' + Math.floor(score / 50) + ' TNT.');
-                    } else {
-                        tntCount = tntCount + tntToBuy;
-                        score = score - totalCost;
-                        canBuyMore = false;
-                    }
+                while (betweenLevels) {
+                    alert('Level complete!');
+                    betweenLevels = false;
                 }
-                level = level + 1;
-                targetScore = targetScore + 50;
-                time = 60;
-                generateMine();
-                betweenLevels = false;
+                if (!betweenLevels){
+                    level = level + 1;
+                    targetScore = targetScore + 50;
+                    time = 60;
+                    generateMine();
+                }
             } else {
                 gameOver = true;
-                alert('Time Up! Score: ' + score);
+                alert('Time Up!');
             }
         }
     }
@@ -436,9 +413,6 @@ document.addEventListener('click', function(e) {
     if (gameOver || betweenLevels) return;
     if (hook.state === 0) {
         hook.shoot();
-    } else if (hook.state === 2 && tntCount > 0) {
-        tntCount = tntCount - 1;
-        hook.detonateTNT();
     }
 });
 
@@ -447,10 +421,7 @@ document.addEventListener('keydown', function(e) {
     if (e.code === 'Space') {
         if (hook.state === 0) {
             hook.shoot();
-        } else if (hook.state === 2 && tntCount > 0) {
-            tntCount = tntCount - 1;
-            hook.detonateTNT();
-        }
+        } 
     }
 });
 
@@ -486,11 +457,10 @@ function gameLoop() {
     ctx.fillRect(0, 0, canvas.width, 30);
     ctx.fillStyle = 'black';
     ctx.font = '16px Arial';
-    ctx.fillText('Money: ' + score, 10, 20);
+    ctx.fillText('Score: ' + score, 10, 20);
     ctx.fillText('Target: ' + targetScore, 150, 20);
     ctx.fillText('Level: ' + level, 300, 20);
     ctx.fillText('Time: ' + Math.floor(time), 400, 20);
-    ctx.fillText('TNT: ' + tntCount, 450, 20);
 }
 
 generateMine();
