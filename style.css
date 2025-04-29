@@ -74,3 +74,20 @@ body {
 .shop-item button:hover {
     background: linear-gradient(to bottom, #45a049, #3d8b40);
 }
+
+#nextLevel {
+    background: linear-gradient(to bottom, #FFD700, #DAA520);
+    color: #333;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 18px;
+    margin-top: 20px;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+#nextLevel:hover {
+    background: linear-gradient(to bottom, #DAA520, #B8860B);
+}
