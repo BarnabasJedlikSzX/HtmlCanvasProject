@@ -14,7 +14,7 @@ var hook = new Hook();
 var score = 0;
 var targetScore = 100;
 var level = 1;
-var time = 60;
+var time = 90;
 var gameOver = false;
 var betweenLevels = false;
 var tntCount = 0;
@@ -477,8 +477,8 @@ function updateHook() {
 
 function updateTime() {
     if (gameOver === false && !betweenLevels) {
-        time = time - (1 / 60);
-        if (time <= 0) {
+        time = time - (1 / 90);
+        if (time <= 0 || checkAllItemsCollected() == true) {
             if (score >= targetScore) {
                 betweenLevels = true;
             } else {
@@ -683,7 +683,7 @@ function restartGame() {
     score = 0;
     targetScore = 100;
     level = 1;
-    time = 60;
+    time = 90;
     gameOver = false;
     betweenLevels = false;
     tntCount = 0;
@@ -700,7 +700,6 @@ document.addEventListener('click', function(e) {
     var clickY = e.clientY - rect.top;
 
     if (betweenLevels) {
-        // Buy TNT button
         if (
             clickX >= 75 &&
             clickX <= 225 &&
